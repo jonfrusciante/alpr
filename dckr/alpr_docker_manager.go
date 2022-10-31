@@ -19,7 +19,7 @@ type AlprDockerManager struct {
 	Client *client.Client
 }
 
-var imageName = "gokalpgoren/openalpr_local"
+var imageName = "curlimages/curl"
 
 func (d *AlprDockerManager) getImage() (*types.ImageSummary, error) {
 	results, err := d.Client.ImageList(context.Background(), types.ImageListOptions{All: false})
@@ -169,11 +169,15 @@ func (d *AlprDockerManager) StartContainer(name string) (*types.Container, error
 
 func (d *AlprDockerManager) ExecRun(ctr *types.Container, fileName string) (*models.AlprResult, error) {
 	ctx := context.Background()
+	str = "upload_file=@/"+fileName+";type=image/jpeg"
 	config := types.ExecConfig{
 		AttachStderr: true,
 		AttachStdout: true,
 		AttachStdin:  true,
-		Cmd:          []string{"alpr", "-c", "eu", fileName, "-j"},
+		Cmd:          []string{ "-X", "POST",   "http://localhost:7861/api/v1/detection/push",
+		  ,"-H" ,"accept: application/json",
+		     "-H", "Content-Type: multipart/form-data",
+			    "-F", str },
 	}
 
 	resp, err := d.Client.ContainerExecCreate(ctx, ctr.ID, config)
